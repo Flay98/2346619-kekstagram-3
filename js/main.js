@@ -5,10 +5,18 @@ function getRandomInt(min, max) {
 }
 
 function checkStringLength(str, maxLength) {
-  if (str.length <= maxLength) {
-    return true;
-  } else {
-    return false;
-  }
+  return str <= maxLength;
+}
+
+let objects = [];
+
+for (let i = 1; i < 26; i++) {
+  let someObject = {id: i,
+    url: 'photos/' + i + '.jpg',
+    description: 'Фото номер ' + i,
+    likes: getRandomInt(15, 200),
+    comments: getRandomInt(0, 200)
+  };
+  objects.push(someObject);
 }
 
