@@ -1,22 +1,7 @@
-function getRandomInt(min, max) {
+import {checkStringLength, generatePost} from './util.js';
+import {str, MAX_STRING_LENGTH } from './data.js';
 
-  const rand = min - 0.5 + Math.random() * (max - min + 1);
-  return Math.round(rand);
-}
+checkStringLength(str, MAX_STRING_LENGTH);
 
-function checkStringLength(str, maxLength) {
-  return str <= maxLength;
-}
-
-let objects = [];
-
-for (let i = 1; i < 26; i++) {
-  let someObject = {id: i,
-    url: 'photos/' + i + '.jpg',
-    description: 'Фото номер ' + i,
-    likes: getRandomInt(15, 200),
-    comments: getRandomInt(0, 200)
-  };
-  objects.push(someObject);
-}
+generatePost();
 
