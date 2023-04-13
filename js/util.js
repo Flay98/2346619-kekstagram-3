@@ -11,19 +11,19 @@ function checkStringLength(strToCheck, maxLength) {
 const LikesCount = {
   MIN: 15,
   MAX: 200.
-}
+};
 
 const CommentsCount = {
   MIN: 0,
   MAX: 200.
-}
+};
 
 function generatePost() {
   const objects = [];
   for (let i = 1; i < 26; i++) {
-    let someObject = {id: i,
-      url: 'photos/' + i + '.jpg',
-      description: 'Фото номер ' + i,
+    const someObject = {id: i,
+      url: `photos/${i}.jpg`,
+      description: `Фото номер ${i}`,
       likes: getRandomInt(LikesCount.MIN, LikesCount.MAX),
       comments: getRandomInt(CommentsCount.MIN, CommentsCount.MAX)
     };
