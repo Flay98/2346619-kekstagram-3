@@ -8,3 +8,4 @@ checkStringLength(str, MAX_STRING_LENGTH);
 
 const photos = generatePost();
 renderPhotos(photos);
+//Задание 7 часть 2
