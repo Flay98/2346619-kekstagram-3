@@ -10,12 +10,12 @@ function checkStringLength(strToCheck, maxLength) {
 
 const LikesCount = {
   MIN: 15,
-  MAX: 200.
+  MAX: 200
 };
 
 const CommentsCount = {
   MIN: 0,
-  MAX: 200.
+  MAX: 200
 };
 
 function generatePost() {
