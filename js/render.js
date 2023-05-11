@@ -1,26 +1,19 @@
+import { getData } from './server.js';
+
+const similarPicture = document.querySelector('#picture');
 const similarListElement = document.querySelector('.pictures');
-const similarPicture = document.querySelector('#picture').content.querySelector('.picture');
-const similarPictInfo = similarPicture.querySelector('.picture__info');
 
-export function renderPhotos(photos) {
-  const similarListFragment = document.createDocumentFragment();
-
-  photos.forEach((photo) => {
-    const photoElement = renderPhoto(photo);
-    similarListFragment.appendChild(photoElement);
+function renderPhotos(photos) {
+  const partOfPicturesList = document.createDocumentFragment();
+  photos.forEach(({url, likes, comments}) => {
+    const picture = similarPicture.content.cloneNode(true);
+    picture.querySelector('.picture__img').src = url;
+    picture.querySelector('.picture__comments').textContent = comments;
+    picture.querySelector('.picture__likes').textContent = likes;
+    partOfPicturesList.appendChild(picture);
   });
 
-  similarListElement.appendChild(similarListFragment);
+  similarListElement.append(partOfPicturesList);
 }
 
-function renderPhoto(photo) {
-  const pictElement = similarPicture.cloneNode(true);
-  const pictInfo = similarPictInfo.cloneNode(true);
-  pictElement.querySelector('.picture__img').src = photo.url;
-  pictInfo.querySelector('.picture__likes').textContent = photo.likes;
-  pictInfo.querySelector('.picture__comments').textContent = photo.comments;
-
-  pictElement.appendChild(pictInfo);
-
-  return pictElement;
-}
+getData(renderPhotos);
