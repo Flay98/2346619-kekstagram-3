@@ -1,113 +1,44 @@
-import { sendData } from './server.js';
+import {HASHTAG_REGEX, MIN_HASHTAG_LENGTH, MAX_HASHTAG_LENGTH, checkLength, MIN_COMMENT_LENGTH, MAX_COMMENT_LENGTH} from './data.js';
 
-const body = document.querySelector('body');
-const form = document.getElementById('upload-select-image');
-const cancelButton = document.querySelector('.img-upload__cancel');
-const submitButton = document.getElementById('upload-submit');
-const imgUploadForm = document.querySelector('.img-upload__overlay');
-const imgInput = document.querySelector('.img-upload__input');
+const hashtag = document.querySelector('.text__hashtags');
 
-const succesPattern = body.querySelector('#success').content.querySelector('.success');
-const errorPattern = body.querySelector('#error').content.querySelector('.error');
-
-function escKeyHandler(evt) {
-  if (evt.key === 'Escape') {
-    form.reset();
-    cancelImgUpload();
-  }
+function validateComment (value) {
+  return value.length >= MIN_COMMENT_LENGTH && value.length <= MAX_COMMENT_LENGTH;
 }
 
-function cancelImgUpload() {
-  imgUploadForm.classList.add('hidden');
-  document.body.classList.remove('modal-open');
-  document.removeEventListener('keydown', escKeyHandler);
+function validateHashTag (value) {
+  return HASHTAG_REGEX.test(value) && !checkLength(value, MIN_HASHTAG_LENGTH) && checkLength(value, MAX_HASHTAG_LENGTH);
 }
 
-function openImgUpload() {
-  imgUploadForm.classList.toggle('hidden');
-  document.body.classList.toggle('modal-open');
-  document.addEventListener('keydown', escKeyHandler);
-}
-
-imgInput.addEventListener('change', openImgUpload);
-cancelButton.addEventListener('click', cancelImgUpload);
-
-const pristine = new Pristine(form, {
-  classTo: 'img-upload__field-wrapper',
-  errorClass: 'img-upload__field-wrapper__item--invalid',
-  successClass: 'img-upload__field-wrapper__item--valid',
-  errorTextParent: 'img-upload__field-wrapper',
-});
-
-function getSuccessMessage() {
-  cancelImgUpload();
-  form.reset();
-  const successMessage = succesPattern.cloneNode(true);
-  body.appendChild(successMessage);
-  const successButton = successMessage.querySelector('.success__button');
-
-  function closeMessage(){
-    successMessage.remove();
-    document.removeEventListener('keydown', handleKeyDownEvent);
-  }
-
-  function handleKeyDownEvent(evt) {
-    if (evt.key === 'Escape') {
-      closeMessage();
-    }
-  }
-
-  successButton.addEventListener('click', () => {
-    closeMessage();
+function checkForm(form) {
+  const pristine = new Pristine(form, {
+    classTo: 'img-upload__field-wrapper',
+    errorClass: 'img-upload__field-wrapper__item--invalid',
+    successClass: 'img-upload__field-wrapper__item--valid',
+    errorTextParent: 'img-upload__field-wrapper',
   });
-  successMessage.addEventListener('click', (evt) => {
-    if (evt.target.matches('.success')) {
-      closeMessage();
-    }
+  pristine.addValidator(
+    form.querySelector('.text__description'),
+    validateComment,
+    'От 20 до 140 символов'
+  );
+
+  const pristineHashTag  = new Pristine (form, {
+    classTo: 'img-upload__text',
+    errorClass: 'form--invalid',
+    successClass: 'form--valid',
+    errorTextParent: 'img-upload__text',
+    errorTextTag: 'span',
+    errorTextClass: 'form__error'
   });
-  document.addEventListener('keydown', handleKeyDownEvent);
+
+  pristineHashTag.addValidator(
+    hashtag,
+    validateHashTag,
+    'Формат хэштега: #anySymbols([3..20])'
+  );
+
+  return (pristine.validate() && pristineHashTag.validate());
 }
 
-function getErrorMessage() {
-  const errorMessage = errorPattern.cloneNode(true);
-  body.appendChild(errorMessage);
-  const errorButton = errorMessage.querySelector('.error__button');
-
-  function closeMessage(){
-    errorMessage.remove();
-    document.removeEventListener('keydown', handleKeyDownEvent);
-  }
-
-  function handleKeyDownEvent(evt) {
-    if (evt.key === 'Escape') {
-      closeMessage();
-    }
-  }
-
-  errorButton.addEventListener('click', () => {
-    closeMessage();
-  });
-  errorMessage.addEventListener('click', (evt) => {
-    if (evt.target.matches('.error')) {
-      closeMessage();
-    }
-  });
-  document.addEventListener('keydown', handleKeyDownEvent);
-}
-
-form.addEventListener('submit', (evt) => {
-  evt.preventDefault();
-  const isValid = pristine.validate();
-  if (isValid) {
-    submitButton.setAttribute('disabled', '');
-    sendData(
-      new FormData(evt.target),
-      getSuccessMessage,
-      getErrorMessage,
-      () => {
-        cancelImgUpload();
-        submitButton.removeAttribute('disabled', '');
-      }
-    );
-  }
-});
+export {checkForm};
