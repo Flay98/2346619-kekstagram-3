@@ -1,125 +1,160 @@
-const imagePreload = document.querySelector('.img-upload__preview');
-const filters = {
-  'chrome': {
-    min: 0,
-    max: 100,
-    name: 'grayscale',
-    step: 0.1,
-    measure: '%'
-  },
-  'sepia' : {
-    min: 0,
-    max: 100,
-    name: 'sepia',
-    step: 1,
-    measure: '%'
-  },
-  'marvin': {
-    min: 0,
-    max: 100,
-    name: 'invert',
-    step: 1,
-    measure: '%'
-  },
-  'phobos': {
-    min: 0,
-    max: 3,
-    name: 'blur',
-    step: 0.03,
-    measure: 'px'
-  },
-  'heat': {
-    min: 1,
-    max: 3,
-    name: 'brightness',
-    step: 0.03,
-    measure: ''
-  }
-};
+import { checkForm } from './validation.js';
+import { sendData } from './server.js';
+import { MAX_SCALE_VALUE, MIN_SCALE_VALUE } from './data.js';
 
+const dataForm = document.querySelector('.img-upload__form');
+const slider = document.querySelector('.effect-level__slider');
+const effectValue = document.querySelector('.effect-level__value');
+const commentField = document.querySelector('.text__description');
+const imgUpload = document.querySelector('.img-upload__overlay');
+const fileInput = document.querySelector('.img-upload__input');
+const closeImgUploadButton = document.querySelector('.img-upload__cancel');
 const scale = document.querySelector('.scale__control--value');
-let scaleValue = Number(scale.value.replace('%', ''));
+const scaleMinusButton = document.querySelector('.scale__control--smaller');
+const scalePlusButton = document.querySelector('.scale__control--bigger');
+const preview = document.querySelector('.img-upload__preview img');
+let currentEffect='none';
 
-document.querySelector('.scale__control--bigger').addEventListener('click', upScale);
-document.querySelector('.scale__control--smaller').addEventListener('click', lowerScale);
-
-function upScale() {
-  if (scaleValue !== 100) {
-    scaleValue += 25;
-    scale.value = `${scaleValue}%`;
-    imagePreload.style.transform = `scale(${scaleValue/100})`;
-  }
-}
-
-function lowerScale() {
-  if (scaleValue !== 25) {
-    scaleValue -= 25;
-    scale.value = `${scaleValue}%`;
-    imagePreload.style.transform = `scale(${scaleValue/100})`;
-  }
-}
-
-const sliderElement = document.querySelector('.effect-level__slider');
-const sliderElementValue = document.querySelector('.effect-level__value');
-
-noUiSlider.create(sliderElement, {
-  start: 0,
+noUiSlider.create(slider, {
+  start:[1],
   range: {
     min: 0,
-    max: 100,
+    max: 1
   },
-  step: 1,
-  connect: true,
+  step:0.1
 });
+slider.classList.add('hidden');
 
-sliderElement.hidden = true;
-
-let currentEffect = 'none';
-let sliderValue;
-
-function setEffect(effect, flag) {
-  const image = imagePreload.querySelector('img');
-  if (effect === 'none') {
-    sliderElement.setAttribute('hidden', true);
-    image.className = '';
-    image.style.filter = '';
-    return;
-  }
-
-  const min = filters[effect].min;
-  const max = filters[effect].max;
-  const step = filters[effect].step;
-  const measure = filters[effect].measure;
-  const name = filters[effect].name;
-
-  if (!flag) {
-    image.style.filter = `${name}(${max}${measure})`;
-    sliderElement.noUiSlider.updateOptions({
-      range: {
-        min,
-        max,
-      },
-      step,
-      start: max,
-    });
-
-    sliderElement.removeAttribute('hidden', false);
-    image.className = '';
-    image.classList.add(`effects__preview--${effect}`);
-    currentEffect = effect;
-  } else {
-    image.style.filter = `${name}(${sliderValue}${measure})`;
-  }
-}
-
-sliderElement.noUiSlider.on('slide', () => {
-  sliderElementValue.value = sliderElement.noUiSlider.get();
-  sliderValue = sliderElement.noUiSlider.get();
-  setEffect(currentEffect, true);
-});
-
-for (const smallPicture of document.querySelectorAll('.effects__radio')) {
-  smallPicture.addEventListener('click', () => {
-    setEffect(smallPicture.value);
+function updateSlider(min, max, step) {
+  slider.noUiSlider.updateOptions({
+    start: [max],
+    range: {
+      min,
+      max
+    },
+    step:step
   });
 }
+
+function closeImgUpload(setDefault = true) {
+  imgUpload.classList.add('hidden');
+  document.removeEventListener('keydown', escapeKeyHandler);
+  if (setDefault) {
+    setScale(MAX_SCALE_VALUE);
+    preview.classList.remove(`effects__preview--${currentEffect}`);
+    preview.classList.add('effects__preview--');
+    currentEffect = 'none';
+    preview.style.filter='';
+    updateSlider(0, 100, 1);
+    commentField.value='';
+    fileInput.value='';
+  }
+}
+
+function escapeKeyHandler(ev) {
+  if (ev.key === 'Escape') {
+    closeImgUpload(true);
+  }
+}
+
+
+function openImgUpload() {
+  imgUpload.classList.remove('hidden');
+  document.addEventListener('keydown', escapeKeyHandler);
+}
+
+fileInput.addEventListener('change', openImgUpload);
+
+closeImgUploadButton.addEventListener('click', closeImgUpload);
+
+function setScale(scl) {
+  scale.value=`${String(scl)}%`;
+  preview.style.transform=`scale(${scl/100})`;
+}
+
+function decreaseScale() {
+  if (parseInt(scale.value, 10) > MIN_SCALE_VALUE) {
+    setScale((parseInt(scale.value, 10)) - MIN_SCALE_VALUE);
+  }
+}
+function increaseScale() {
+  if (parseInt(scale.value, 10) < MAX_SCALE_VALUE) {
+    setScale((parseInt(scale.value, 10)) + MIN_SCALE_VALUE);
+  }
+}
+scaleMinusButton.addEventListener('click', decreaseScale);
+scalePlusButton.addEventListener('click', increaseScale);
+
+
+const effectButtons = document.querySelectorAll('.effects__radio');
+function addEffectHandler(button) {
+  button.addEventListener('change', ()=> {
+    preview.classList.remove(`effects__preview--${currentEffect}`);
+    preview.classList.add(`effects__preview--${button.value}`);
+    slider.classList.remove('hidden');
+    currentEffect=button.value;
+    switch (currentEffect) {
+      case 'chrome':
+        effectValue.value=1;
+        updateSlider(0,1,0.1);
+        preview.style.filter=`grayscale(${effectValue.value})`;
+        break;
+      case 'sepia':
+        effectValue.value=1;
+        updateSlider(0,1,0.1);
+        preview.style.filter=`sepia(${effectValue.value})`;
+        break;
+      case 'marvin':
+        effectValue.value=100;
+        updateSlider(0, 100, 1);
+        preview.style.filter=`invert(${effectValue.value}%)`;
+        break;
+      case 'phobos':
+        effectValue.value=3;
+        updateSlider(0,3, 0.1);
+        preview.style.filter=`blur(${effectValue.value}px)`;
+        break;
+      case 'heat':
+        effectValue.value=3;
+        updateSlider(1,3,0.1);
+        preview.style.filter=`brightness(${effectValue.value})`;
+        break;
+      case 'none':
+        slider.classList.add('hidden');
+        preview.style.filter='';
+        break;
+    }
+  });
+}
+
+for (let i = 0; i<effectButtons.length; i++) {
+  addEffectHandler(effectButtons[i]);
+}
+
+slider.noUiSlider.on('slide', ()=> {
+  effectValue.value=slider.noUiSlider.get(true);
+  switch(currentEffect) {
+    case 'chrome':
+      preview.style.filter=`grayscale(${effectValue.value})`;
+      break;
+    case 'sepia':
+      preview.style.filter=`sepia(${effectValue.value})`;
+      break;
+    case 'marvin':
+      preview.style.filter=`invert(${effectValue.value}%)`;
+      break;
+    case 'phobos':
+      preview.style.filter=`blur(${effectValue.value}px)`;
+      break;
+    case 'heat':
+      preview.style.filter=`brightness(${effectValue.value})`;
+      break;
+  }
+});
+
+dataForm.addEventListener('submit', (evt) => {
+  evt.preventDefault();
+  if (checkForm(dataForm)) {
+    sendData(dataForm, closeImgUpload, openImgUpload);
+  }
+});
